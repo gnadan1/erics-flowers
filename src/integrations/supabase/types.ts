@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      flower_types: {
+        Row: {
+          created_at: string
+          default_vase_life_days: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          default_vase_life_days?: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          default_vase_life_days?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      inventory_batches: {
+        Row: {
+          color: string
+          created_at: string
+          flower_type_id: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          qty_received: number
+          qty_remaining: number
+          received_date: string
+          retail_price: number
+          status: string
+          supplier_id: string | null
+          unit_cost: number
+          updated_at: string
+          vase_life_days: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          flower_type_id: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          qty_received: number
+          qty_remaining: number
+          received_date?: string
+          retail_price?: number
+          status?: string
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string
+          vase_life_days: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          flower_type_id?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          qty_received?: number
+          qty_remaining?: number
+          received_date?: string
+          retail_price?: number
+          status?: string
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string
+          vase_life_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_batches_flower_type_id_fkey"
+            columns: ["flower_type_id"]
+            isOneToOne: false
+            referencedRelation: "flower_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_batches_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          batch_id: string
+          id: string
+          qty_sold: number
+          sale_price: number
+          sold_at: string
+        }
+        Insert: {
+          batch_id: string
+          id?: string
+          qty_sold: number
+          sale_price?: number
+          sold_at?: string
+        }
+        Update: {
+          batch_id?: string
+          id?: string
+          qty_sold?: number
+          sale_price?: number
+          sold_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact: string | null
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
