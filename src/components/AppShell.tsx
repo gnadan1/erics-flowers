@@ -3,13 +3,18 @@ import { Flower2, LayoutDashboard, Package, PackagePlus, Receipt, Settings } fro
 import { Toaster } from "@/components/ui/sonner";
 import type { ReactNode } from "react";
 
-const navItems = [
+const navItems: ReadonlyArray<{
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+}> = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/receive", label: "Receive", icon: PackagePlus },
   { to: "/sales", label: "Sales", icon: Receipt },
   { to: "/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
