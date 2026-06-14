@@ -90,7 +90,7 @@ function InventoryPage() {
       }
       return true;
     });
-  }, [batches, search, statusFilter, freshnessFilter]);
+  }, [batches, search, statusFilter, freshnessFilter, categoryFilter]);
 
   return (
     <AppShell>
