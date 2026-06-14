@@ -113,6 +113,18 @@ function InventoryPage() {
             />
           </div>
           <div>
+            <Label className="text-xs">Category</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {FLOWER_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label className="text-xs">Status</Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>
