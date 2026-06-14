@@ -58,6 +58,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("in_stock");
   const [freshnessFilter, setFreshnessFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sellBatch, setSellBatch] = useState<InventoryBatch | null>(null);
   const [discardBatch, setDiscardBatch] = useState<InventoryBatch | null>(null);
 
