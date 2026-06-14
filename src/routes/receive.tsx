@@ -113,12 +113,31 @@ function ReceivePage() {
               mutation.mutate();
             }}
           >
-            <div className="sm:col-span-1">
-              <Label>Flower type *</Label>
-              <Select value={flowerTypeId} onValueChange={setFlowerTypeId}>
-                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+            <div>
+              <Label>Category *</Label>
+              <Select
+                value={category}
+                onValueChange={(v) => {
+                  setCategory(v as FlowerCategory);
+                  setFlowerTypeId("");
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Choose category…" /></SelectTrigger>
                 <SelectContent>
-                  {flowerTypes.map((t) => (
+                  {FLOWER_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Variety *</Label>
+              <Select value={flowerTypeId} onValueChange={setFlowerTypeId} disabled={!category}>
+                <SelectTrigger>
+                  <SelectValue placeholder={category ? "Choose variety…" : "Pick a category first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTypes.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name} <span className="text-muted-foreground">({t.default_vase_life_days}d)</span>
                     </SelectItem>
