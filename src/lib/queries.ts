@@ -44,6 +44,7 @@ export const flowerTypesQuery = queryOptions({
     const { data, error } = await supabase
       .from("flower_types")
       .select("*")
+      .order("category")
       .order("name");
     if (error) throw error;
     return data as FlowerType[];
