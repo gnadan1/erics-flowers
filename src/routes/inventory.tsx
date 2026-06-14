@@ -178,7 +178,9 @@ function InventoryPage() {
                 <TableRow key={b.id}>
                   <TableCell>
                     <div className="font-medium">{b.flower_types?.name ?? "—"}</div>
-                    {b.color && <div className="text-xs text-muted-foreground">{b.color}</div>}
+                    <div className="text-xs text-muted-foreground">
+                      {b.flower_types?.category}{b.color ? ` · ${b.color}` : ""}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {b.qty_remaining}
