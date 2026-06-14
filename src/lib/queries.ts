@@ -88,7 +88,7 @@ export const salesQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("sales")
-      .select("*, inventory_batches(color, flower_types(name))")
+      .select("*, inventory_batches(color, flower_types(name, category))")
       .order("sold_at", { ascending: false })
       .limit(500);
     if (error) throw error;
