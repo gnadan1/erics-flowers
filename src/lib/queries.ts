@@ -34,7 +34,7 @@ export type Sale = {
   sold_at: string;
   inventory_batches: {
     color: string;
-    flower_types: { name: string } | null;
+    flower_types: { name: string; category: FlowerCategory } | null;
   } | null;
 };
 
