@@ -67,6 +67,7 @@ function InventoryPage() {
       if (statusFilter === "in_stock" && (b.status !== "active" || b.qty_remaining <= 0)) return false;
       if (statusFilter === "sold_out" && b.status !== "sold_out") return false;
       if (statusFilter === "discarded" && b.status !== "discarded") return false;
+      if (categoryFilter !== "all" && b.flower_types?.category !== categoryFilter) return false;
       if (freshnessFilter !== "all" && b.status === "active" && b.qty_remaining > 0) {
         const f = computeFreshness(b.received_date, b.vase_life_days);
         if (f.status !== freshnessFilter) return false;
