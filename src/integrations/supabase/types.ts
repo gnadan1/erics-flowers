@@ -16,18 +16,21 @@ export type Database = {
     Tables: {
       flower_types: {
         Row: {
+          category: string
           created_at: string
           default_vase_life_days: number
           id: string
           name: string
         }
         Insert: {
+          category?: string
           created_at?: string
           default_vase_life_days?: number
           id?: string
           name: string
         }
         Update: {
+          category?: string
           created_at?: string
           default_vase_life_days?: number
           id?: string
