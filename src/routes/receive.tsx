@@ -44,7 +44,9 @@ function ReceivePage() {
   const { data: suppliers } = useSuspenseQuery(suppliersQuery);
   const { data: locations } = useSuspenseQuery(locationsQuery);
 
+  const [category, setCategory] = useState<FlowerCategory | "">("");
   const [flowerTypeId, setFlowerTypeId] = useState("");
+  const filteredTypes = category ? flowerTypes.filter((t) => t.category === category) : [];
   const [color, setColor] = useState("");
   const [supplierId, setSupplierId] = useState<string>("none");
   const [locationId, setLocationId] = useState<string>("none");
