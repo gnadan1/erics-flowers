@@ -38,10 +38,12 @@ function SettingsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage flower types, locations, and suppliers.</p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="space-y-4">
         <FlowerTypesCard />
-        <LocationsCard />
-        <SuppliersCard />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LocationsCard />
+          <SuppliersCard />
+        </div>
       </div>
     </AppShell>
   );
