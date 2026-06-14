@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { flowerTypesQuery, suppliersQuery, locationsQuery } from "@/lib/queries";
+import { flowerTypesQuery, suppliersQuery, locationsQuery, FLOWER_CATEGORIES, type FlowerCategory } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
