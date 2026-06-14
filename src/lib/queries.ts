@@ -1,7 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type FlowerType = { id: string; name: string; default_vase_life_days: number };
+export const FLOWER_CATEGORIES = ["FLOWERS", "NOVELTY", "TROPICALS", "GREENS", "LIVE PLANTS"] as const;
+export type FlowerCategory = (typeof FLOWER_CATEGORIES)[number];
+export type FlowerType = { id: string; name: string; category: FlowerCategory; default_vase_life_days: number };
 export type Supplier = { id: string; name: string; contact: string | null };
 export type Location = { id: string; name: string };
 export type InventoryBatch = {
