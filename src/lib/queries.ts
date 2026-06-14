@@ -75,7 +75,7 @@ export const batchesQuery = queryOptions({
     const { data, error } = await supabase
       .from("inventory_batches")
       .select(
-        "*, flower_types(name), suppliers(name), locations(name)",
+        "*, flower_types(name, category), suppliers(name), locations(name)",
       )
       .order("received_date", { ascending: false });
     if (error) throw error;
