@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { batchesQuery, type InventoryBatch } from "@/lib/queries";
+import { batchesQuery, FLOWER_CATEGORIES, type InventoryBatch } from "@/lib/queries";
 import { computeFreshness, formatCurrency } from "@/lib/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
