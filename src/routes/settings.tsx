@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { flowerTypesQuery, suppliersQuery, locationsQuery } from "@/lib/queries";
+import { flowerTypesQuery, suppliersQuery, locationsQuery, FLOWER_CATEGORIES, type FlowerCategory } from "@/lib/queries";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -37,10 +38,12 @@ function SettingsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage flower types, locations, and suppliers.</p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="space-y-4">
         <FlowerTypesCard />
-        <LocationsCard />
-        <SuppliersCard />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <LocationsCard />
+          <SuppliersCard />
+        </div>
       </div>
     </AppShell>
   );
@@ -51,6 +54,7 @@ function FlowerTypesCard() {
   const { data } = useSuspenseQuery(flowerTypesQuery);
   const [name, setName] = useState("");
   const [days, setDays] = useState("7");
+  const [newCategory, setNewCategory] = useState<FlowerCategory>("FLOWERS");
 
   const add = useMutation({
     mutationFn: async () => {
@@ -59,14 +63,14 @@ function FlowerTypesCard() {
       if (!Number.isFinite(d) || d <= 0) throw new Error("Days must be positive");
       const { error } = await supabase
         .from("flower_types")
-        .insert({ name: name.trim(), default_vase_life_days: d });
+        .insert({ name: name.trim(), category: newCategory, default_vase_life_days: d });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["flower_types"] });
       setName("");
       setDays("7");
-      toast.success("Flower type added");
+      toast.success("Variety added");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -92,38 +96,56 @@ function FlowerTypesCard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const grouped = FLOWER_CATEGORIES.map((c) => ({
+    category: c,
+    items: data.filter((t) => t.category === c),
+  })).filter((g) => g.items.length > 0);
+
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-base">Flower types</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        <ul className="divide-y divide-border">
-          {data.map((t) => (
-            <li key={t.id} className="flex items-center gap-2 py-2">
-              <span className="flex-1 truncate text-sm font-medium">{t.name}</span>
-              <Input
-                type="number"
-                min={1}
-                defaultValue={t.default_vase_life_days}
-                onBlur={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  if (Number.isFinite(v) && v > 0 && v !== t.default_vase_life_days) {
-                    update.mutate({ id: t.id, default_vase_life_days: v });
-                  }
-                }}
-                className="w-20"
-              />
-              <span className="text-xs text-muted-foreground">days</span>
-              <Button size="icon" variant="ghost" onClick={() => del.mutate(t.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </li>
+    <Card className="lg:col-span-3">
+      <CardHeader><CardTitle className="text-base">Categories &amp; varieties</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {grouped.map((g) => (
+            <div key={g.category} className="rounded-md border border-border p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.category}</p>
+              <ul className="divide-y divide-border">
+                {g.items.map((t) => (
+                  <li key={t.id} className="flex items-center gap-2 py-1.5">
+                    <span className="flex-1 truncate text-sm">{t.name}</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      defaultValue={t.default_vase_life_days}
+                      onBlur={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        if (Number.isFinite(v) && v > 0 && v !== t.default_vase_life_days) {
+                          update.mutate({ id: t.id, default_vase_life_days: v });
+                        }
+                      }}
+                      className="w-16 h-8"
+                    />
+                    <span className="text-xs text-muted-foreground">d</span>
+                    <Button size="icon" variant="ghost" onClick={() => del.mutate(t.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
         <div className="border-t border-border pt-3">
-          <Label className="text-xs">Add new</Label>
-          <div className="flex gap-2 mt-1">
-            <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input type="number" min={1} className="w-20" value={days} onChange={(e) => setDays(e.target.value)} />
+          <Label className="text-xs">Add new variety</Label>
+          <div className="mt-1 grid gap-2 sm:grid-cols-[1fr_1fr_5rem_auto]">
+            <Select value={newCategory} onValueChange={(v) => setNewCategory(v as FlowerCategory)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FLOWER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Input placeholder="Variety name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input type="number" min={1} value={days} onChange={(e) => setDays(e.target.value)} />
             <Button onClick={() => add.mutate()} disabled={add.isPending}>Add</Button>
           </div>
         </div>

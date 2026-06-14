@@ -1,7 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type FlowerType = { id: string; name: string; default_vase_life_days: number };
+export const FLOWER_CATEGORIES = ["FLOWERS", "NOVELTY", "TROPICALS", "GREENS", "LIVE PLANTS"] as const;
+export type FlowerCategory = (typeof FLOWER_CATEGORIES)[number];
+export type FlowerType = { id: string; name: string; category: FlowerCategory; default_vase_life_days: number };
 export type Supplier = { id: string; name: string; contact: string | null };
 export type Location = { id: string; name: string };
 export type InventoryBatch = {
@@ -20,7 +22,7 @@ export type InventoryBatch = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  flower_types: { name: string } | null;
+  flower_types: { name: string; category: FlowerCategory } | null;
   suppliers: { name: string } | null;
   locations: { name: string } | null;
 };
@@ -32,7 +34,7 @@ export type Sale = {
   sold_at: string;
   inventory_batches: {
     color: string;
-    flower_types: { name: string } | null;
+    flower_types: { name: string; category: FlowerCategory } | null;
   } | null;
 };
 
@@ -42,6 +44,7 @@ export const flowerTypesQuery = queryOptions({
     const { data, error } = await supabase
       .from("flower_types")
       .select("*")
+      .order("category")
       .order("name");
     if (error) throw error;
     return data as FlowerType[];
@@ -72,7 +75,7 @@ export const batchesQuery = queryOptions({
     const { data, error } = await supabase
       .from("inventory_batches")
       .select(
-        "*, flower_types(name), suppliers(name), locations(name)",
+        "*, flower_types(name, category), suppliers(name), locations(name)",
       )
       .order("received_date", { ascending: false });
     if (error) throw error;
@@ -85,7 +88,7 @@ export const salesQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("sales")
-      .select("*, inventory_batches(color, flower_types(name))")
+      .select("*, inventory_batches(color, flower_types(name, category))")
       .order("sold_at", { ascending: false })
       .limit(500);
     if (error) throw error;

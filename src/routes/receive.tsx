@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { flowerTypesQuery, suppliersQuery, locationsQuery } from "@/lib/queries";
+import { flowerTypesQuery, suppliersQuery, locationsQuery, FLOWER_CATEGORIES, type FlowerCategory } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -44,7 +44,9 @@ function ReceivePage() {
   const { data: suppliers } = useSuspenseQuery(suppliersQuery);
   const { data: locations } = useSuspenseQuery(locationsQuery);
 
+  const [category, setCategory] = useState<FlowerCategory | "">("");
   const [flowerTypeId, setFlowerTypeId] = useState("");
+  const filteredTypes = category ? flowerTypes.filter((t) => t.category === category) : [];
   const [color, setColor] = useState("");
   const [supplierId, setSupplierId] = useState<string>("none");
   const [locationId, setLocationId] = useState<string>("none");
@@ -111,12 +113,31 @@ function ReceivePage() {
               mutation.mutate();
             }}
           >
-            <div className="sm:col-span-1">
-              <Label>Flower type *</Label>
-              <Select value={flowerTypeId} onValueChange={setFlowerTypeId}>
-                <SelectTrigger><SelectValue placeholder="Choose…" /></SelectTrigger>
+            <div>
+              <Label>Category *</Label>
+              <Select
+                value={category}
+                onValueChange={(v) => {
+                  setCategory(v as FlowerCategory);
+                  setFlowerTypeId("");
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Choose category…" /></SelectTrigger>
                 <SelectContent>
-                  {flowerTypes.map((t) => (
+                  {FLOWER_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Variety *</Label>
+              <Select value={flowerTypeId} onValueChange={setFlowerTypeId} disabled={!category}>
+                <SelectTrigger>
+                  <SelectValue placeholder={category ? "Choose variety…" : "Pick a category first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTypes.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name} <span className="text-muted-foreground">({t.default_vase_life_days}d)</span>
                     </SelectItem>

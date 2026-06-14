@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { batchesQuery, type InventoryBatch } from "@/lib/queries";
+import { batchesQuery, FLOWER_CATEGORIES, type InventoryBatch } from "@/lib/queries";
 import { computeFreshness, formatCurrency } from "@/lib/inventory";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ function InventoryPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("in_stock");
   const [freshnessFilter, setFreshnessFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sellBatch, setSellBatch] = useState<InventoryBatch | null>(null);
   const [discardBatch, setDiscardBatch] = useState<InventoryBatch | null>(null);
 
@@ -66,6 +67,7 @@ function InventoryPage() {
       if (statusFilter === "in_stock" && (b.status !== "active" || b.qty_remaining <= 0)) return false;
       if (statusFilter === "sold_out" && b.status !== "sold_out") return false;
       if (statusFilter === "discarded" && b.status !== "discarded") return false;
+      if (categoryFilter !== "all" && b.flower_types?.category !== categoryFilter) return false;
       if (freshnessFilter !== "all" && b.status === "active" && b.qty_remaining > 0) {
         const f = computeFreshness(b.received_date, b.vase_life_days);
         if (f.status !== freshnessFilter) return false;
@@ -88,7 +90,7 @@ function InventoryPage() {
       }
       return true;
     });
-  }, [batches, search, statusFilter, freshnessFilter]);
+  }, [batches, search, statusFilter, freshnessFilter, categoryFilter]);
 
   return (
     <AppShell>
@@ -100,7 +102,7 @@ function InventoryPage() {
       </div>
 
       <Card className="mb-4 p-3">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Label htmlFor="search" className="text-xs">Search</Label>
             <Input
@@ -109,6 +111,18 @@ function InventoryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+          </div>
+          <div>
+            <Label className="text-xs">Category</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {FLOWER_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-xs">Status</Label>
@@ -164,7 +178,9 @@ function InventoryPage() {
                 <TableRow key={b.id}>
                   <TableCell>
                     <div className="font-medium">{b.flower_types?.name ?? "—"}</div>
-                    {b.color && <div className="text-xs text-muted-foreground">{b.color}</div>}
+                    <div className="text-xs text-muted-foreground">
+                      {b.flower_types?.category}{b.color ? ` · ${b.color}` : ""}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {b.qty_remaining}
