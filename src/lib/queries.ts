@@ -22,7 +22,7 @@ export type InventoryBatch = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  flower_types: { name: string } | null;
+  flower_types: { name: string; category: FlowerCategory } | null;
   suppliers: { name: string } | null;
   locations: { name: string } | null;
 };
