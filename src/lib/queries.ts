@@ -172,17 +172,49 @@ export const locationsQuery = queryOptions({
   },
 });
 
+function byId<T extends { id: string }>(rows: T[] | null | undefined) {
+  return new Map((rows ?? []).map((row) => [row.id, row]));
+}
+
 export const batchesQuery = queryOptions({
   queryKey: ["inventory_batches"],
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from("inventory_batches")
-      .select(
-        "*, inventory_categories(name), inventory_subcategories(name), suppliers(name), locations(name)",
-      )
-      .order("received_date", { ascending: false });
+    const [batches, categories, subcategories, suppliers, locations] = await Promise.all([
+      supabase.from("inventory_batches").select("*").order("received_date", { ascending: false }),
+      supabase.from("inventory_categories").select("id, name"),
+      supabase.from("inventory_subcategories").select("id, name"),
+      supabase.from("suppliers").select("id, name"),
+      supabase.from("locations").select("id, name"),
+    ]);
+
+    const error =
+      batches.error ??
+      categories.error ??
+      subcategories.error ??
+      suppliers.error ??
+      locations.error;
     if (error) throw error;
-    return data as unknown as InventoryBatch[];
+
+    const categoriesById = byId(categories.data);
+    const subcategoriesById = byId(subcategories.data);
+    const suppliersById = byId(suppliers.data);
+    const locationsById = byId(locations.data);
+
+    return (batches.data ?? []).map((batch) => ({
+      ...batch,
+      inventory_categories: batch.category_id
+        ? { name: categoriesById.get(batch.category_id)?.name ?? "" }
+        : null,
+      inventory_subcategories: batch.subcategory_id
+        ? { name: subcategoriesById.get(batch.subcategory_id)?.name ?? "" }
+        : null,
+      suppliers: batch.supplier_id
+        ? { name: suppliersById.get(batch.supplier_id)?.name ?? "" }
+        : null,
+      locations: batch.location_id
+        ? { name: locationsById.get(batch.location_id)?.name ?? "" }
+        : null,
+    })) as InventoryBatch[];
   },
 });
 
@@ -191,9 +223,7 @@ export const salesQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("sales")
-      .select(
-        "*, inventory_batches(variety_name, sku, color, unit_type, inventory_categories(name), inventory_subcategories(name))",
-      )
+      .select("*, inventory_batches(variety_name, sku, color, unit_type)")
       .order("sold_at", { ascending: false })
       .limit(500);
     if (error) throw error;
