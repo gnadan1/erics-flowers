@@ -12,7 +12,10 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Petal Inventory" },
-      { name: "description", content: "Track flower shop inventory, freshness, and sales at a glance." },
+      {
+        name: "description",
+        content: "Track flower shop inventory, freshness, and sales at a glance.",
+      },
     ],
   }),
   loader: ({ context }) => {
@@ -25,7 +28,9 @@ export const Route = createFileRoute("/")({
       <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-sm">
         <p className="font-medium">Couldn't load the dashboard.</p>
         <p className="mt-1 text-muted-foreground">{error.message}</p>
-        <Button onClick={reset} variant="outline" className="mt-3">Try again</Button>
+        <Button onClick={reset} variant="outline" className="mt-3">
+          Try again
+        </Button>
       </div>
     </AppShell>
   ),
@@ -36,10 +41,7 @@ function Dashboard() {
   const { data: sales } = useSuspenseQuery(salesQuery);
 
   const active = batches.filter((b) => b.status === "active" && b.qty_remaining > 0);
-  const stockValue = active.reduce(
-    (s, b) => s + Number(b.retail_price) * b.qty_remaining,
-    0,
-  );
+  const stockValue = active.reduce((s, b) => s + Number(b.retail_price) * b.qty_remaining, 0);
   const stockUnits = active.reduce((s, b) => s + b.qty_remaining, 0);
 
   const withFreshness = active.map((b) => ({
@@ -52,16 +54,33 @@ function Dashboard() {
 
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recentSales = sales.filter((s) => new Date(s.sold_at).getTime() >= oneWeekAgo);
-  const revenue7d = recentSales.reduce(
-    (s, x) => s + Number(x.sale_price) * x.qty_sold,
-    0,
-  );
+  const revenue7d = recentSales.reduce((s, x) => s + Number(x.sale_price) * x.qty_sold, 0);
 
   const stats = [
-    { label: "Stock value", value: formatCurrency(stockValue), icon: DollarSign, sub: `${stockUnits} stems` },
-    { label: "Active batches", value: active.length.toString(), icon: Package, sub: `${batches.length} total` },
-    { label: "Needs attention", value: needsAttention.length.toString(), icon: AlertTriangle, sub: "critical or expired" },
-    { label: "Revenue (7d)", value: formatCurrency(revenue7d), icon: Receipt, sub: `${recentSales.length} sales` },
+    {
+      label: "Stock value",
+      value: formatCurrency(stockValue),
+      icon: DollarSign,
+      sub: `${stockUnits} units`,
+    },
+    {
+      label: "Active batches",
+      value: active.length.toString(),
+      icon: Package,
+      sub: `${batches.length} total`,
+    },
+    {
+      label: "Needs attention",
+      value: needsAttention.length.toString(),
+      icon: AlertTriangle,
+      sub: "critical or expired",
+    },
+    {
+      label: "Revenue (7d)",
+      value: formatCurrency(revenue7d),
+      icon: Receipt,
+      sub: `${recentSales.length} sales`,
+    },
   ];
 
   return (
@@ -111,11 +130,14 @@ function Dashboard() {
                 <li key={b.id} className="flex items-center justify-between gap-3 py-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {b.flower_types?.name ?? "—"}
-                      {b.color ? ` · ${b.color}` : ""}
+                      {b.variety_name}
+                      {b.primary_color || b.color_family
+                        ? ` · ${b.primary_color || b.color_family}`
+                        : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {b.qty_remaining} stems · {b.locations?.name ?? "no location"}
+                      {b.qty_remaining} {b.unit_type.toLowerCase()} ·{" "}
+                      {b.locations?.name ?? "no location"}
                     </p>
                   </div>
                   <FreshnessBadge receivedDate={b.received_date} vaseLifeDays={b.vase_life_days} />

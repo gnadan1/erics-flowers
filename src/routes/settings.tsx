@@ -6,8 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { flowerTypesQuery, suppliersQuery, locationsQuery, FLOWER_CATEGORIES, type FlowerCategory } from "@/lib/queries";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  inventoryCategoriesQuery,
+  inventorySubcategoriesQuery,
+  suppliersQuery,
+  locationsQuery,
+} from "@/lib/queries";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -15,7 +26,8 @@ import { Trash2 } from "lucide-react";
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Petal Inventory" }] }),
   loader: ({ context }) => {
-    context.queryClient.ensureQueryData(flowerTypesQuery);
+    context.queryClient.ensureQueryData(inventoryCategoriesQuery);
+    context.queryClient.ensureQueryData(inventorySubcategoriesQuery);
     context.queryClient.ensureQueryData(suppliersQuery);
     context.queryClient.ensureQueryData(locationsQuery);
   },
@@ -25,7 +37,9 @@ export const Route = createFileRoute("/settings")({
       <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-sm">
         <p className="font-medium">Couldn't load settings.</p>
         <p className="mt-1 text-muted-foreground">{error.message}</p>
-        <Button onClick={reset} variant="outline" className="mt-3">Try again</Button>
+        <Button onClick={reset} variant="outline" className="mt-3">
+          Try again
+        </Button>
       </div>
     </AppShell>
   ),
@@ -36,10 +50,12 @@ function SettingsPage() {
     <AppShell>
       <div className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage flower types, locations, and suppliers.</p>
+        <p className="text-sm text-muted-foreground">
+          Manage inventory categories, locations, and suppliers.
+        </p>
       </div>
       <div className="space-y-4">
-        <FlowerTypesCard />
+        <InventoryTaxonomyCard />
         <div className="grid gap-4 lg:grid-cols-2">
           <LocationsCard />
           <SuppliersCard />
@@ -49,66 +65,100 @@ function SettingsPage() {
   );
 }
 
-function FlowerTypesCard() {
+function InventoryTaxonomyCard() {
   const qc = useQueryClient();
-  const { data } = useSuspenseQuery(flowerTypesQuery);
-  const [name, setName] = useState("");
+  const { data: categories } = useSuspenseQuery(inventoryCategoriesQuery);
+  const { data: subcategories } = useSuspenseQuery(inventorySubcategoriesQuery);
+  const [categoryName, setCategoryName] = useState("");
+  const [subcategoryName, setSubcategoryName] = useState("");
   const [days, setDays] = useState("7");
-  const [newCategory, setNewCategory] = useState<FlowerCategory>("FLOWERS");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-  const add = useMutation({
+  const addCategory = useMutation({
+    mutationFn: async () => {
+      if (!categoryName.trim()) throw new Error("Category name required");
+      const { error } = await supabase
+        .from("inventory_categories")
+        .insert({ name: categoryName.trim() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory_categories"] });
+      setCategoryName("");
+      toast.success("Category added");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addSubcategory = useMutation({
     mutationFn: async () => {
       const d = parseInt(days, 10);
-      if (!name.trim()) throw new Error("Name required");
+      if (!selectedCategoryId) throw new Error("Category required");
+      if (!subcategoryName.trim()) throw new Error("Subcategory name required");
       if (!Number.isFinite(d) || d <= 0) throw new Error("Days must be positive");
-      const { error } = await supabase
-        .from("flower_types")
-        .insert({ name: name.trim(), category: newCategory, default_vase_life_days: d });
+      const { error } = await supabase.from("inventory_subcategories").insert({
+        category_id: selectedCategoryId,
+        name: subcategoryName.trim(),
+        default_vase_life_days: d,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["flower_types"] });
-      setName("");
+      qc.invalidateQueries({ queryKey: ["inventory_subcategories"] });
+      setSubcategoryName("");
       setDays("7");
-      toast.success("Variety added");
+      toast.success("Subcategory added");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const update = useMutation({
-    mutationFn: async ({ id, default_vase_life_days }: { id: string; default_vase_life_days: number }) => {
-      const { error } = await supabase.from("flower_types").update({ default_vase_life_days }).eq("id", id);
+  const updateSubcategory = useMutation({
+    mutationFn: async ({
+      id,
+      default_vase_life_days,
+    }: {
+      id: string;
+      default_vase_life_days: number;
+    }) => {
+      const { error } = await supabase
+        .from("inventory_subcategories")
+        .update({ default_vase_life_days })
+        .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["flower_types"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["inventory_subcategories"] }),
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const del = useMutation({
+  const deleteSubcategory = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("flower_types").delete().eq("id", id);
+      const { error } = await supabase.from("inventory_subcategories").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["flower_types"] });
+      qc.invalidateQueries({ queryKey: ["inventory_subcategories"] });
       toast.success("Removed");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const grouped = FLOWER_CATEGORIES.map((c) => ({
-    category: c,
-    items: data.filter((t) => t.category === c),
-  })).filter((g) => g.items.length > 0);
+  const grouped = categories.map((category) => ({
+    category,
+    items: subcategories.filter((subcategory) => subcategory.category_id === category.id),
+  }));
 
   return (
     <Card className="lg:col-span-3">
-      <CardHeader><CardTitle className="text-base">Categories &amp; varieties</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">Categories &amp; subcategories</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {grouped.map((g) => (
-            <div key={g.category} className="rounded-md border border-border p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g.category}</p>
+            <div key={g.category.id} className="rounded-md border border-border p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {g.category.name}
+              </p>
               <ul className="divide-y divide-border">
                 {g.items.map((t) => (
                   <li key={t.id} className="flex items-center gap-2 py-1.5">
@@ -120,13 +170,17 @@ function FlowerTypesCard() {
                       onBlur={(e) => {
                         const v = parseInt(e.target.value, 10);
                         if (Number.isFinite(v) && v > 0 && v !== t.default_vase_life_days) {
-                          update.mutate({ id: t.id, default_vase_life_days: v });
+                          updateSubcategory.mutate({ id: t.id, default_vase_life_days: v });
                         }
                       }}
                       className="w-16 h-8"
                     />
                     <span className="text-xs text-muted-foreground">d</span>
-                    <Button size="icon" variant="ghost" onClick={() => del.mutate(t.id)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteSubcategory.mutate(t.id)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </li>
@@ -136,17 +190,42 @@ function FlowerTypesCard() {
           ))}
         </div>
         <div className="border-t border-border pt-3">
-          <Label className="text-xs">Add new variety</Label>
+          <Label className="text-xs">Add category</Label>
+          <div className="mt-1 flex gap-2">
+            <Input
+              placeholder="Category name"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+            />
+            <Button onClick={() => addCategory.mutate()} disabled={addCategory.isPending}>
+              Add
+            </Button>
+          </div>
+        </div>
+        <div className="border-t border-border pt-3">
+          <Label className="text-xs">Add subcategory</Label>
           <div className="mt-1 grid gap-2 sm:grid-cols-[1fr_1fr_5rem_auto]">
-            <Select value={newCategory} onValueChange={(v) => setNewCategory(v as FlowerCategory)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
               <SelectContent>
-                {FLOWER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Variety name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              placeholder="Subcategory name"
+              value={subcategoryName}
+              onChange={(e) => setSubcategoryName(e.target.value)}
+            />
             <Input type="number" min={1} value={days} onChange={(e) => setDays(e.target.value)} />
-            <Button onClick={() => add.mutate()} disabled={add.isPending}>Add</Button>
+            <Button onClick={() => addSubcategory.mutate()} disabled={addSubcategory.isPending}>
+              Add
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -181,7 +260,9 @@ function LocationsCard() {
   });
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Store locations</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">Store locations</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y divide-border">
           {data.map((l) => (
@@ -196,8 +277,14 @@ function LocationsCard() {
         <div className="border-t border-border pt-3">
           <Label className="text-xs">Add new</Label>
           <div className="flex gap-2 mt-1">
-            <Input placeholder="e.g. Cooler C" value={name} onChange={(e) => setName(e.target.value)} />
-            <Button onClick={() => add.mutate()} disabled={add.isPending}>Add</Button>
+            <Input
+              placeholder="e.g. Cooler C"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Button onClick={() => add.mutate()} disabled={add.isPending}>
+              Add
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -237,7 +324,9 @@ function SuppliersCard() {
   });
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Suppliers</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">Suppliers</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-3">
         <ul className="divide-y divide-border">
           {data.map((s) => (
@@ -255,8 +344,14 @@ function SuppliersCard() {
         <div className="border-t border-border pt-3 space-y-2">
           <Label className="text-xs">Add new</Label>
           <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input placeholder="Contact (optional)" value={contact} onChange={(e) => setContact(e.target.value)} />
-          <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">Add supplier</Button>
+          <Input
+            placeholder="Contact (optional)"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+          />
+          <Button onClick={() => add.mutate()} disabled={add.isPending} className="w-full">
+            Add supplier
+          </Button>
         </div>
       </CardContent>
     </Card>

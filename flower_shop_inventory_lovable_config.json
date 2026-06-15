@@ -1,0 +1,718 @@
+{
+  "app_name": "Flower Shop Plant and Flower Inventory Entry System",
+  "version": "1.0",
+  "description": "Lovable-friendly JSON configuration for a flower shop inventory entry form with dependent category/subcategory dropdowns and common inventory properties.",
+  "data_model_notes": [
+    "Use category as the top-level dropdown.",
+    "Use subcategory as the dependent second dropdown.",
+    "Use variety_name/SKU as the third level for specific inventory items.",
+    "Some subcategories may only have a few SKUs, while Roses, Lilies, Orchids, and similar groups may have hundreds."
+  ],
+  "categories": [
+    {
+      "name": "Flowers",
+      "subcategories": [
+        "Alstroemeria",
+        "Aster-Focal",
+        "Aster-Spray",
+        "Bells of Ireland",
+        "Bouquets",
+        "Calla Lily",
+        "Carnations",
+        "Carnations-Mini",
+        "Combo Box",
+        "Daffodil",
+        "Dahlia",
+        "Delphinium",
+        "Gerbera",
+        "Gladiolus",
+        "Gypsophila",
+        "Hydrangea",
+        "Hypericum",
+        "Iris",
+        "Laceflower",
+        "Larkspur",
+        "Liatris",
+        "Lilies",
+        "Limonium",
+        "Lisianthus",
+        "Mums-Bunched",
+        "Mums-Stem",
+        "Novelty",
+        "Peony",
+        "Pom Pons",
+        "Ranunculus",
+        "Roses-Garden",
+        "Roses-Spray",
+        "Roses-Standard",
+        "Roses-Sweetheart",
+        "Snapdragon",
+        "Statice",
+        "Stock",
+        "Sunflower",
+        "Sweet Pea",
+        "Tulips",
+        "Tulips-French",
+        "Waxflower"
+      ]
+    },
+    {
+      "name": "Novelty",
+      "subcategories": [
+        "Agapanthus",
+        "Ageratum",
+        "Alchemilla",
+        "Allium",
+        "Amaranthus",
+        "Anemone",
+        "Artemisia",
+        "Asclepias",
+        "Astilbe",
+        "Astrantia",
+        "Berry",
+        "Branch",
+        "Brunia",
+        "Bupleurum",
+        "Calendula",
+        "Campanula",
+        "Clematis",
+        "Cornflower",
+        "Cosmos",
+        "Craspedia",
+        "Daisy",
+        "Dianthus",
+        "Dill",
+        "Euphorbia",
+        "Fever Few",
+        "Foxglove",
+        "Freesia",
+        "Geranium",
+        "Godetia",
+        "Grass",
+        "Heather",
+        "Heliopsis",
+        "Helleborus",
+        "Hyacinth",
+        "Kale/Brassica",
+        "Kangaroo Paw",
+        "Lamb's Ear",
+        "Lavender",
+        "Lilac",
+        "Lysimachia",
+        "Mini Gerbera",
+        "Mint",
+        "Miscellaneous Fillers",
+        "Nigella",
+        "Ornithogalum",
+        "Phlox",
+        "Pods",
+        "Poppy",
+        "Poppy Mix",
+        "Rosemary",
+        "Rudbeckia",
+        "Rumex",
+        "Safflower",
+        "Sarracenia",
+        "Scabiosa",
+        "Silene",
+        "Strawflower",
+        "Thistle",
+        "Trachelium",
+        "Tuberose",
+        "Tweedia",
+        "Veronica",
+        "Viburnum",
+        "Yarrow",
+        "Zinnia"
+      ]
+    },
+    {
+      "name": "Tropicals",
+      "subcategories": [
+        "Anthurium",
+        "Bird of Paradise",
+        "Bouquet",
+        "Cymbidium",
+        "Gardenia",
+        "Ginger",
+        "Heliconia",
+        "Leaves",
+        "Orchids",
+        "Proteaceae",
+        "Stephanotis",
+        "Uluhe"
+      ]
+    },
+    {
+      "name": "Greens",
+      "subcategories": [
+        "Aspidistra",
+        "Bear Grass",
+        "Bouquets",
+        "Boxwood",
+        "Cedar Port Orford",
+        "Cocculus",
+        "Emerald",
+        "Eucalyptus",
+        "Flat Fern",
+        "Foxtail",
+        "Garlands",
+        "Huckleberry",
+        "Ivy",
+        "Leatherleaf",
+        "Magnolia Foliage",
+        "Ming Fern",
+        "Miscellaneous Greens",
+        "Monkey Grass",
+        "Moss",
+        "Myrtle",
+        "Palm",
+        "Papyrus",
+        "Pittosporum",
+        "Plumosus",
+        "Rhamnus",
+        "Ruscus",
+        "Salal",
+        "Smilax",
+        "Springeri",
+        "Sword Fern",
+        "Tree Fern",
+        "Willow Curly"
+      ]
+    },
+    {
+      "name": "Live Plants",
+      "subcategories": [
+        "Accessories",
+        "Aglaonema",
+        "Azalea",
+        "Bromeliads",
+        "Cactus and Succulents",
+        "Carnivorous Plants",
+        "Dieffenbachia",
+        "Dish Gardens",
+        "Dracaena",
+        "Fern",
+        "Ficus",
+        "Hanging Baskets",
+        "Hibiscus",
+        "Hydrangea",
+        "Ivy",
+        "Kalanchoe",
+        "Miscellaneous Flowering",
+        "Miscellaneous Foliage",
+        "Mum Plants",
+        "Orchid",
+        "Palm",
+        "Philodendron",
+        "Pothos",
+        "Schefflera",
+        "Spathiphyllum",
+        "Violets"
+      ]
+    }
+  ],
+  "dropdown_options": {
+    "seasonality": [
+      "Year Round",
+      "Spring",
+      "Summer",
+      "Fall",
+      "Winter",
+      "Spring-Summer",
+      "Summer-Fall",
+      "Fall-Winter",
+      "Holiday",
+      "Limited Seasonal",
+      "Special Order Only"
+    ],
+    "availability_status": [
+      "In Stock",
+      "Low Stock",
+      "Out of Stock",
+      "Preorder",
+      "Special Order",
+      "Discontinued",
+      "Seasonal Only"
+    ],
+    "quality_grade": [
+      {
+        "value": 1,
+        "label": "1 - Utility"
+      },
+      {
+        "value": 2,
+        "label": "2 - Standard"
+      },
+      {
+        "value": 3,
+        "label": "3 - Good"
+      },
+      {
+        "value": 4,
+        "label": "4 - Premium"
+      },
+      {
+        "value": 5,
+        "label": "5 - Luxury/Event"
+      }
+    ],
+    "color_family": [
+      "White",
+      "Ivory",
+      "Cream",
+      "Blush",
+      "Pink",
+      "Hot Pink",
+      "Peach",
+      "Coral",
+      "Orange",
+      "Yellow",
+      "Green",
+      "Lavender",
+      "Purple",
+      "Blue",
+      "Burgundy",
+      "Red",
+      "Brown",
+      "Chocolate",
+      "Black",
+      "Variegated",
+      "Mixed"
+    ],
+    "unit_type": [
+      "Stem",
+      "Bunch",
+      "Bundle",
+      "Plant",
+      "Pot",
+      "Tray",
+      "Box",
+      "Case",
+      "Garland",
+      "Bouquet",
+      "Arrangement",
+      "Each"
+    ],
+    "floral_role": [
+      "Focal",
+      "Line",
+      "Filler",
+      "Mass",
+      "Accent",
+      "Greenery",
+      "Tropical",
+      "Plant",
+      "Supply/Accessory"
+    ],
+    "bloom_size": [
+      "Mini",
+      "Small",
+      "Medium",
+      "Large",
+      "Extra Large",
+      "N/A"
+    ],
+    "stem_length_unit": [
+      "cm",
+      "inches"
+    ],
+    "texture": [
+      "Soft",
+      "Delicate",
+      "Airy",
+      "Spiky",
+      "Round",
+      "Linear",
+      "Glossy",
+      "Matte",
+      "Woody",
+      "Wispy",
+      "Dense",
+      "N/A"
+    ],
+    "storage_temperature": [
+      "Room Temperature",
+      "Cooler",
+      "Tropical - Do Not Refrigerate",
+      "Dry Storage",
+      "Outdoor",
+      "N/A"
+    ],
+    "pet_toxicity": [
+      "Unknown",
+      "Generally Pet Safe",
+      "Toxic to Cats",
+      "Toxic to Dogs",
+      "Toxic to Cats and Dogs",
+      "Irritant"
+    ],
+    "plant_light_requirement": [
+      "Low Light",
+      "Medium Indirect Light",
+      "Bright Indirect Light",
+      "Direct Sun",
+      "Partial Shade",
+      "N/A"
+    ],
+    "plant_water_requirement": [
+      "Low",
+      "Medium",
+      "High",
+      "Keep Moist",
+      "Allow to Dry Between Watering",
+      "N/A"
+    ]
+  },
+  "inventory_item_schema": {
+    "sku_id": {
+      "type": "string",
+      "required": true,
+      "label": "SKU ID"
+    },
+    "category": {
+      "type": "select",
+      "required": true,
+      "source": "categories.name",
+      "label": "Category"
+    },
+    "subcategory": {
+      "type": "dependent_select",
+      "required": true,
+      "depends_on": "category",
+      "source": "categories.subcategories",
+      "label": "Subcategory"
+    },
+    "variety_name": {
+      "type": "string",
+      "required": true,
+      "label": "Variety / Item Name"
+    },
+    "display_name": {
+      "type": "string",
+      "required": false,
+      "label": "Display Name"
+    },
+    "description": {
+      "type": "textarea",
+      "required": false,
+      "label": "Description"
+    },
+    "vendor": {
+      "type": "string",
+      "required": false,
+      "label": "Vendor"
+    },
+    "farm": {
+      "type": "string",
+      "required": false,
+      "label": "Farm / Grower"
+    },
+    "country_of_origin": {
+      "type": "string",
+      "required": false,
+      "label": "Country of Origin"
+    },
+    "color_family": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.color_family",
+      "label": "Color Family"
+    },
+    "primary_color": {
+      "type": "string",
+      "required": false,
+      "label": "Primary Color"
+    },
+    "secondary_color": {
+      "type": "string",
+      "required": false,
+      "label": "Secondary Color"
+    },
+    "seasonality": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.seasonality",
+      "label": "Seasonality"
+    },
+    "availability_status": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.availability_status",
+      "label": "Availability"
+    },
+    "quality_grade": {
+      "type": "number",
+      "required": true,
+      "min": 1,
+      "max": 5,
+      "label": "Quality Grade"
+    },
+    "floral_role": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.floral_role",
+      "label": "Floral Role"
+    },
+    "stem_length": {
+      "type": "number",
+      "required": false,
+      "label": "Stem Length"
+    },
+    "stem_length_unit": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.stem_length_unit",
+      "default": "cm",
+      "label": "Stem Length Unit"
+    },
+    "bloom_size": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.bloom_size",
+      "label": "Bloom Size"
+    },
+    "stems_per_bunch": {
+      "type": "number",
+      "required": false,
+      "label": "Stems per Bunch"
+    },
+    "fragrance_level": {
+      "type": "number",
+      "required": false,
+      "min": 0,
+      "max": 5,
+      "label": "Fragrance Level"
+    },
+    "texture": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.texture",
+      "label": "Texture"
+    },
+    "expected_vase_life_days": {
+      "type": "number",
+      "required": false,
+      "label": "Expected Vase Life Days"
+    },
+    "requires_hydration": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "label": "Requires Hydration"
+    },
+    "storage_temperature": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.storage_temperature",
+      "label": "Storage Temperature"
+    },
+    "pet_toxicity": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.pet_toxicity",
+      "label": "Pet Toxicity"
+    },
+    "live_plant": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "label": "Live Plant"
+    },
+    "plant_pot_size": {
+      "type": "string",
+      "required": false,
+      "label": "Plant Pot Size"
+    },
+    "plant_light_requirement": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.plant_light_requirement",
+      "label": "Plant Light Requirement"
+    },
+    "plant_water_requirement": {
+      "type": "select",
+      "required": false,
+      "options_ref": "dropdown_options.plant_water_requirement",
+      "label": "Plant Water Requirement"
+    },
+    "unit_type": {
+      "type": "select",
+      "required": true,
+      "options_ref": "dropdown_options.unit_type",
+      "label": "Unit Type"
+    },
+    "quantity_on_hand": {
+      "type": "number",
+      "required": true,
+      "min": 0,
+      "label": "Quantity on Hand"
+    },
+    "quantity_reserved": {
+      "type": "number",
+      "required": false,
+      "min": 0,
+      "label": "Quantity Reserved"
+    },
+    "reorder_level": {
+      "type": "number",
+      "required": false,
+      "min": 0,
+      "label": "Reorder Level"
+    },
+    "cost_per_unit": {
+      "type": "currency",
+      "required": false,
+      "label": "Cost per Unit"
+    },
+    "selling_price": {
+      "type": "currency",
+      "required": false,
+      "label": "Selling Price"
+    },
+    "received_date": {
+      "type": "date",
+      "required": false,
+      "label": "Received Date"
+    },
+    "expiration_date": {
+      "type": "date",
+      "required": false,
+      "label": "Expiration / Pull Date"
+    },
+    "wedding_popularity": {
+      "type": "number",
+      "required": false,
+      "min": 1,
+      "max": 5,
+      "label": "Wedding Popularity"
+    },
+    "event_popularity": {
+      "type": "number",
+      "required": false,
+      "min": 1,
+      "max": 5,
+      "label": "Event Popularity"
+    },
+    "premium_item": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "label": "Premium Item"
+    },
+    "organic": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "label": "Organic"
+    },
+    "locally_grown": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "label": "Locally Grown"
+    },
+    "imported": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "label": "Imported"
+    },
+    "active": {
+      "type": "boolean",
+      "required": true,
+      "default": true,
+      "label": "Active"
+    },
+    "notes": {
+      "type": "textarea",
+      "required": false,
+      "label": "Notes"
+    }
+  },
+  "lovable_form_instructions": {
+    "form_name": "Inventory Item Entry",
+    "primary_table": "inventory_items",
+    "dependent_dropdown_behavior": {
+      "category_field": "category",
+      "subcategory_field": "subcategory",
+      "rule": "When the user selects a category, populate the subcategory dropdown with only the subcategories belonging to that category."
+    },
+    "recommended_pages": [
+      "Inventory Item Entry",
+      "Inventory List",
+      "Inventory Detail",
+      "Category/Subcategory Admin",
+      "Vendor Admin"
+    ],
+    "validation_rules": [
+      "category is required",
+      "subcategory is required",
+      "variety_name is required",
+      "quality_grade must be between 1 and 5",
+      "quantity_on_hand must be zero or greater",
+      "unit_type is required",
+      "sku_id must be unique"
+    ],
+    "recommended_search_filters": [
+      "category",
+      "subcategory",
+      "color_family",
+      "seasonality",
+      "availability_status",
+      "quality_grade",
+      "vendor",
+      "active",
+      "premium_item",
+      "live_plant"
+    ]
+  },
+  "example_inventory_items": [
+    {
+      "sku_id": "ROSE-STANDARD-FREEDOM-60CM",
+      "category": "Flowers",
+      "subcategory": "Roses-Standard",
+      "variety_name": "Freedom",
+      "color_family": "Red",
+      "seasonality": "Year Round",
+      "quality_grade": 4,
+      "stem_length": 60,
+      "stem_length_unit": "cm",
+      "unit_type": "Stem",
+      "stems_per_bunch": 25,
+      "floral_role": "Focal",
+      "expected_vase_life_days": 7,
+      "live_plant": false,
+      "active": true
+    },
+    {
+      "sku_id": "LILY-ORIENTAL-WHITE",
+      "category": "Flowers",
+      "subcategory": "Lilies",
+      "variety_name": "White Oriental Lily",
+      "color_family": "White",
+      "seasonality": "Year Round",
+      "quality_grade": 4,
+      "unit_type": "Stem",
+      "floral_role": "Focal",
+      "expected_vase_life_days": 7,
+      "live_plant": false,
+      "active": true
+    },
+    {
+      "sku_id": "PLANT-ORCHID-PHAL-6IN",
+      "category": "Live Plants",
+      "subcategory": "Orchid",
+      "variety_name": "Phalaenopsis Orchid 6 inch",
+      "color_family": "Mixed",
+      "seasonality": "Year Round",
+      "quality_grade": 4,
+      "unit_type": "Plant",
+      "live_plant": true,
+      "plant_pot_size": "6 inch",
+      "plant_light_requirement": "Bright Indirect Light",
+      "plant_water_requirement": "Medium",
+      "active": true
+    }
+  ]
+}

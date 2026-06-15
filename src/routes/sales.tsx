@@ -26,7 +26,9 @@ export const Route = createFileRoute("/sales")({
       <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-sm">
         <p className="font-medium">Couldn't load sales.</p>
         <p className="mt-1 text-muted-foreground">{error.message}</p>
-        <Button onClick={reset} variant="outline" className="mt-3">Try again</Button>
+        <Button onClick={reset} variant="outline" className="mt-3">
+          Try again
+        </Button>
       </div>
     </AppShell>
   ),
@@ -73,7 +75,7 @@ function SalesPage() {
                     {format(new Date(s.sold_at), "MMM d, yyyy h:mm a")}
                   </TableCell>
                   <TableCell>
-                    <span className="font-medium">{s.inventory_batches?.flower_types?.name ?? "—"}</span>
+                    <span className="font-medium">{s.inventory_batches?.variety_name ?? "—"}</span>
                     {s.inventory_batches?.color && (
                       <span className="text-muted-foreground"> · {s.inventory_batches.color}</span>
                     )}
