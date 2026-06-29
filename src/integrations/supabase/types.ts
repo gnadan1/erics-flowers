@@ -394,6 +394,47 @@ export type Database = {
           },
         ];
       };
+      inventory_movements: {
+        Row: {
+          created_at: string;
+          id: string;
+          inventory_batch_id: string;
+          note: string | null;
+          quantity: number;
+          quantity_after: number | null;
+          quantity_before: number | null;
+          reason: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          inventory_batch_id: string;
+          note?: string | null;
+          quantity: number;
+          quantity_after?: number | null;
+          quantity_before?: number | null;
+          reason: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          inventory_batch_id?: string;
+          note?: string | null;
+          quantity?: number;
+          quantity_after?: number | null;
+          quantity_before?: number | null;
+          reason?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_inventory_batch_id_fkey";
+            columns: ["inventory_batch_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_batches";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       inventory_subcategories: {
         Row: {
           category_id: string;
