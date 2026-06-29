@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Flower2, LayoutDashboard, Package, PackagePlus, Receipt, Settings } from "lucide-react";
+import {
+  ClipboardList,
+  Flower2,
+  LayoutDashboard,
+  Package,
+  PackagePlus,
+  Settings,
+} from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import type { ReactNode } from "react";
 
@@ -12,7 +19,7 @@ const navItems: ReadonlyArray<{
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/receive", label: "Receive", icon: PackagePlus },
-  { to: "/sales", label: "Sales", icon: Receipt },
+  { to: "/orders", label: "Order", icon: ClipboardList },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
