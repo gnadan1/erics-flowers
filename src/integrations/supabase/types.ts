@@ -491,6 +491,149 @@ export type Database = {
         };
         Relationships: [];
       };
+      order_arrangements: {
+        Row: {
+          arrangement_number: number;
+          created_at: string;
+          description: string | null;
+          id: string;
+          notes: string | null;
+          order_id: string;
+          price: number;
+          updated_at: string;
+        };
+        Insert: {
+          arrangement_number?: number;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          notes?: string | null;
+          order_id: string;
+          price?: number;
+          updated_at?: string;
+        };
+        Update: {
+          arrangement_number?: number;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          notes?: string | null;
+          order_id?: string;
+          price?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_arrangements_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      order_ingredients: {
+        Row: {
+          created_at: string;
+          id: string;
+          ingredient_type: string;
+          inventory_batch_id: string | null;
+          manual_name: string | null;
+          notes: string | null;
+          order_arrangement_id: string;
+          quantity: number;
+          unit_type: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          ingredient_type?: string;
+          inventory_batch_id?: string | null;
+          manual_name?: string | null;
+          notes?: string | null;
+          order_arrangement_id: string;
+          quantity: number;
+          unit_type?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          ingredient_type?: string;
+          inventory_batch_id?: string | null;
+          manual_name?: string | null;
+          notes?: string | null;
+          order_arrangement_id?: string;
+          quantity?: number;
+          unit_type?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_ingredients_inventory_batch_id_fkey";
+            columns: ["inventory_batch_id"];
+            isOneToOne: false;
+            referencedRelation: "inventory_batches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_ingredients_order_arrangement_id_fkey";
+            columns: ["order_arrangement_id"];
+            isOneToOne: false;
+            referencedRelation: "order_arrangements";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      orders: {
+        Row: {
+          address: string | null;
+          created_at: string;
+          fulfillment_method: string;
+          id: string;
+          notes: string | null;
+          order_number: string;
+          phone: string | null;
+          recipient_name: string | null;
+          referring_order_number: string | null;
+          satisfaction: number | null;
+          source: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          address?: string | null;
+          created_at?: string;
+          fulfillment_method?: string;
+          id?: string;
+          notes?: string | null;
+          order_number: string;
+          phone?: string | null;
+          recipient_name?: string | null;
+          referring_order_number?: string | null;
+          satisfaction?: number | null;
+          source?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          address?: string | null;
+          created_at?: string;
+          fulfillment_method?: string;
+          id?: string;
+          notes?: string | null;
+          order_number?: string;
+          phone?: string | null;
+          recipient_name?: string | null;
+          referring_order_number?: string | null;
+          satisfaction?: number | null;
+          source?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       sales: {
         Row: {
           batch_id: string;

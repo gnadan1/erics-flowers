@@ -118,6 +118,55 @@ export type Sale = {
     inventory_subcategories: { name: string } | null;
   } | null;
 };
+export type OrderSource = "dove" | "fsn" | "phone" | "in_person" | "spec";
+export type FulfillmentMethod = "pickup" | "shop" | "delivery";
+export type OrderStatus = "draft" | "scheduled" | "in_progress" | "fulfilled" | "cancelled";
+export type IngredientType = "flower" | "green" | "non_floral" | "other";
+export type OrderIngredient = {
+  id: string;
+  order_arrangement_id: string;
+  inventory_batch_id: string | null;
+  ingredient_type: IngredientType;
+  manual_name: string | null;
+  quantity: number;
+  unit_type: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  inventory_batches: {
+    color: string;
+    variety_name: string | null;
+    sku: string | null;
+    unit_type: string | null;
+  } | null;
+};
+export type OrderArrangement = {
+  id: string;
+  order_id: string;
+  arrangement_number: number;
+  description: string | null;
+  price: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  order_ingredients: OrderIngredient[];
+};
+export type Order = {
+  id: string;
+  order_number: string;
+  source: OrderSource;
+  referring_order_number: string | null;
+  recipient_name: string | null;
+  fulfillment_method: FulfillmentMethod;
+  address: string | null;
+  phone: string | null;
+  satisfaction: number | null;
+  status: OrderStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  order_arrangements: OrderArrangement[];
+};
 
 export const inventoryCategoriesQuery = queryOptions({
   queryKey: ["inventory_categories"],
@@ -228,5 +277,20 @@ export const salesQuery = queryOptions({
       .limit(500);
     if (error) throw error;
     return data as unknown as Sale[];
+  },
+});
+
+export const ordersQuery = queryOptions({
+  queryKey: ["orders"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type)))",
+      )
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    return (data ?? []) as unknown as Order[];
   },
 });
