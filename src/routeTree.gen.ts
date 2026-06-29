@@ -15,6 +15,8 @@ import { Route as ReceiveRouteImport } from './routes/receive'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OrdersNewRouteImport } from './routes/orders.new'
+import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -46,31 +48,47 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersNewRoute = OrdersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => OrdersRoute,
+} as any)
+const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
+  id: '/$orderId',
+  path: '/$orderId',
+  getParentRoute: () => OrdersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/inventory': typeof InventoryRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/receive': typeof ReceiveRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders/new': typeof OrdersNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/inventory': typeof InventoryRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/receive': typeof ReceiveRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders/new': typeof OrdersNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/inventory': typeof InventoryRoute
-  '/orders': typeof OrdersRoute
+  '/orders': typeof OrdersRouteWithChildren
   '/receive': typeof ReceiveRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders/new': typeof OrdersNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +99,18 @@ export interface FileRouteTypes {
     | '/receive'
     | '/sales'
     | '/settings'
+    | '/orders/$orderId'
+    | '/orders/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inventory' | '/orders' | '/receive' | '/sales' | '/settings'
+  to:
+    | '/'
+    | '/inventory'
+    | '/orders'
+    | '/receive'
+    | '/sales'
+    | '/settings'
+    | '/orders/$orderId'
+    | '/orders/new'
   id:
     | '__root__'
     | '/'
@@ -91,12 +119,14 @@ export interface FileRouteTypes {
     | '/receive'
     | '/sales'
     | '/settings'
+    | '/orders/$orderId'
+    | '/orders/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InventoryRoute: typeof InventoryRoute
-  OrdersRoute: typeof OrdersRoute
+  OrdersRoute: typeof OrdersRouteWithChildren
   ReceiveRoute: typeof ReceiveRoute
   SalesRoute: typeof SalesRoute
   SettingsRoute: typeof SettingsRoute
@@ -146,13 +176,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orders/new': {
+      id: '/orders/new'
+      path: '/new'
+      fullPath: '/orders/new'
+      preLoaderRoute: typeof OrdersNewRouteImport
+      parentRoute: typeof OrdersRoute
+    }
+    '/orders/$orderId': {
+      id: '/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof OrdersOrderIdRouteImport
+      parentRoute: typeof OrdersRoute
+    }
   }
 }
+
+interface OrdersRouteChildren {
+  OrdersOrderIdRoute: typeof OrdersOrderIdRoute
+  OrdersNewRoute: typeof OrdersNewRoute
+}
+
+const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersOrderIdRoute: OrdersOrderIdRoute,
+  OrdersNewRoute: OrdersNewRoute,
+}
+
+const OrdersRouteWithChildren =
+  OrdersRoute._addFileChildren(OrdersRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InventoryRoute: InventoryRoute,
-  OrdersRoute: OrdersRoute,
+  OrdersRoute: OrdersRouteWithChildren,
   ReceiveRoute: ReceiveRoute,
   SalesRoute: SalesRoute,
   SettingsRoute: SettingsRoute,

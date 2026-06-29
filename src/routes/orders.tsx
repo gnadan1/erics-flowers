@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/inventory";
 import { ordersQuery, type Order } from "@/lib/queries";
+import { Plus } from "lucide-react";
 
 const SOURCE_LABELS: Record<Order["source"], string> = {
   dove: "DOVE",
@@ -68,10 +69,15 @@ function ingredientCount(order: Order) {
 }
 
 function OrdersPage() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: orders } = useSuspenseQuery(ordersQuery);
   const activeOrders = orders.filter(
     (order) => order.status !== "fulfilled" && order.status !== "cancelled",
   );
+
+  if (pathname.replace(/\/$/, "") !== "/orders") {
+    return <Outlet />;
+  }
 
   return (
     <AppShell>
@@ -82,9 +88,16 @@ function OrdersPage() {
             {activeOrders.length} active orders · {orders.length} total
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to="/sales">Legacy sales log</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to="/orders/new">
+              <Plus className="h-4 w-4" /> New order
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/sales">Legacy sales log</Link>
+          </Button>
+        </div>
       </div>
 
       <Card className="overflow-x-auto">
@@ -113,7 +126,13 @@ function OrdersPage() {
               orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="whitespace-nowrap">
-                    <div className="font-medium">{order.order_number}</div>
+                    <Link
+                      to="/orders/$orderId"
+                      params={{ orderId: order.id }}
+                      className="font-medium hover:underline"
+                    >
+                      {order.order_number}
+                    </Link>
                     <div className="text-xs text-muted-foreground">
                       {order.order_arrangements.length} arrangements · {ingredientCount(order)}{" "}
                       ingredients

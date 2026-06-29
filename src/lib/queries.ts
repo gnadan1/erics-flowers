@@ -294,3 +294,20 @@ export const ordersQuery = queryOptions({
     return (data ?? []) as unknown as Order[];
   },
 });
+
+export function orderQuery(orderId: string) {
+  return queryOptions({
+    queryKey: ["orders", orderId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type)))",
+        )
+        .eq("id", orderId)
+        .single();
+      if (error) throw error;
+      return data as unknown as Order;
+    },
+  });
+}
