@@ -6,6 +6,7 @@ import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -40,7 +41,7 @@ import { computeFreshness, formatCurrency } from "@/lib/inventory";
 import { INVENTORY_DROPDOWN_OPTIONS } from "@/lib/inventoryConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, ArrowUpDown, Trash2, ShoppingCart } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CircleMinus, Trash2, ShoppingCart } from "lucide-react";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({ meta: [{ title: "Inventory — Petal Inventory" }] }),
@@ -66,6 +67,18 @@ export const Route = createFileRoute("/inventory")({
 type SortKey = "item" | "qty" | "location" | "supplier" | "sku" | "received" | "price" | "status";
 type SortDirection = "asc" | "desc";
 type SortState = { key: SortKey; direction: SortDirection };
+
+const INVENTORY_MOVEMENT_REASONS = [
+  { value: "used_in_order", label: "Used in order" },
+  { value: "breakage", label: "Breakage" },
+  { value: "unusable_on_arrival", label: "Unusable on arrival" },
+  { value: "spec_arrangement", label: "Spec arrangement" },
+  { value: "spec_refresh", label: "Spec refresh" },
+  { value: "aged_out", label: "Aged out" },
+  { value: "manual_adjustment", label: "Manual adjustment" },
+] as const;
+
+type InventoryMovementReason = (typeof INVENTORY_MOVEMENT_REASONS)[number]["value"];
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
@@ -102,6 +115,14 @@ function inventoryItemDetail(batch: InventoryBatch) {
 function freshnessSortValue(batch: InventoryBatch) {
   if (batch.status !== "active" || batch.qty_remaining <= 0) return batch.status;
   return computeFreshness(batch.received_date, batch.vase_life_days).status;
+}
+
+function depletedStatusForMovement(reason: InventoryMovementReason): "sold_out" | "discarded" {
+  if (reason === "used_in_order" || reason === "spec_arrangement" || reason === "spec_refresh") {
+    return "sold_out";
+  }
+
+  return "discarded";
 }
 
 function compareStrings(a: string, b: string) {
@@ -174,6 +195,7 @@ function InventoryPage() {
   const [qualityFilter, setQualityFilter] = useState<string>("all");
   const [sort, setSort] = useState<SortState>({ key: "received", direction: "desc" });
   const [sellBatch, setSellBatch] = useState<InventoryBatch | null>(null);
+  const [movementBatch, setMovementBatch] = useState<InventoryBatch | null>(null);
   const [discardBatch, setDiscardBatch] = useState<InventoryBatch | null>(null);
   const filteredSubcategories = useMemo(
     () => subcategories.filter((s) => categoryFilter === "all" || s.category_id === categoryFilter),
@@ -484,6 +506,9 @@ function InventoryPage() {
                         <Button size="sm" variant="outline" onClick={() => setSellBatch(b)}>
                           <ShoppingCart className="h-3.5 w-3.5" /> Sell
                         </Button>
+                        <Button size="sm" variant="outline" onClick={() => setMovementBatch(b)}>
+                          <CircleMinus className="h-3.5 w-3.5" /> Use/Loss
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => setDiscardBatch(b)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -498,6 +523,9 @@ function InventoryPage() {
       </Card>
 
       {sellBatch && <SellDialog batch={sellBatch} onClose={() => setSellBatch(null)} />}
+      {movementBatch && (
+        <MovementDialog batch={movementBatch} onClose={() => setMovementBatch(null)} />
+      )}
       {discardBatch && <DiscardDialog batch={discardBatch} onClose={() => setDiscardBatch(null)} />}
     </AppShell>
   );
@@ -582,6 +610,110 @@ function SellDialog({ batch, onClose }: { batch: InventoryBatch; onClose: () => 
           </Button>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Saving…" : "Record sale"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MovementDialog({ batch, onClose }: { batch: InventoryBatch; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [qty, setQty] = useState("1");
+  const [reason, setReason] = useState<InventoryMovementReason>("breakage");
+  const [note, setNote] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const q = parseInt(qty, 10);
+      if (!Number.isFinite(q) || q <= 0 || q > batch.qty_remaining) {
+        throw new Error(`Quantity must be between 1 and ${batch.qty_remaining}`);
+      }
+
+      const newRemaining = batch.qty_remaining - q;
+      const { error: movementError } = await supabase.from("inventory_movements").insert({
+        inventory_batch_id: batch.id,
+        reason,
+        quantity: q,
+        quantity_before: batch.qty_remaining,
+        quantity_after: newRemaining,
+        note: note.trim() || null,
+      });
+      if (movementError) throw movementError;
+
+      const { error: batchError } = await supabase
+        .from("inventory_batches")
+        .update({
+          qty_remaining: newRemaining,
+          status: newRemaining === 0 ? depletedStatusForMovement(reason) : "active",
+        })
+        .eq("id", batch.id);
+      if (batchError) throw batchError;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inventory_batches"] });
+      qc.invalidateQueries({ queryKey: ["inventory_movements"] });
+      toast.success("Inventory movement recorded");
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record use or loss</DialogTitle>
+          <DialogDescription>
+            {batch.variety_name ?? "Inventory batch"} - {batch.qty_remaining} available
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div>
+            <Label htmlFor="movement_reason">Reason</Label>
+            <Select
+              value={reason}
+              onValueChange={(value) => setReason(value as InventoryMovementReason)}
+            >
+              <SelectTrigger id="movement_reason">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INVENTORY_MOVEMENT_REASONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="movement_qty">Quantity</Label>
+            <Input
+              id="movement_qty"
+              type="number"
+              min={1}
+              max={batch.qty_remaining}
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="movement_note">Note</Label>
+            <Textarea
+              id="movement_note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+            {mutation.isPending ? "Saving…" : "Record movement"}
           </Button>
         </DialogFooter>
       </DialogContent>
