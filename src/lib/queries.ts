@@ -122,6 +122,14 @@ export type OrderSource = "dove" | "fsn" | "phone" | "in_person" | "spec";
 export type FulfillmentMethod = "pickup" | "shop" | "delivery";
 export type OrderStatus = "draft" | "scheduled" | "in_progress" | "fulfilled" | "cancelled";
 export type IngredientType = "flower" | "green" | "non_floral" | "other";
+export type InventoryMovementReason =
+  | "used_in_order"
+  | "breakage"
+  | "unusable_on_arrival"
+  | "spec_arrangement"
+  | "spec_refresh"
+  | "aged_out"
+  | "manual_adjustment";
 export type OrderIngredient = {
   id: string;
   order_arrangement_id: string;
@@ -138,6 +146,8 @@ export type OrderIngredient = {
     variety_name: string | null;
     sku: string | null;
     unit_type: string | null;
+    unit_cost: number;
+    retail_price: number;
   } | null;
 };
 export type OrderArrangement = {
@@ -166,6 +176,24 @@ export type Order = {
   created_at: string;
   updated_at: string;
   order_arrangements: OrderArrangement[];
+};
+export type InventoryMovement = {
+  id: string;
+  inventory_batch_id: string;
+  reason: InventoryMovementReason;
+  quantity: number;
+  quantity_before: number | null;
+  quantity_after: number | null;
+  note: string | null;
+  created_at: string;
+  inventory_batches: {
+    color: string;
+    variety_name: string | null;
+    sku: string | null;
+    unit_type: string | null;
+    unit_cost: number;
+    retail_price: number;
+  } | null;
 };
 
 export const inventoryCategoriesQuery = queryOptions({
@@ -286,7 +314,7 @@ export const ordersQuery = queryOptions({
     const { data, error } = await supabase
       .from("orders")
       .select(
-        "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type)))",
+        "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type, unit_cost, retail_price)))",
       )
       .order("created_at", { ascending: false })
       .limit(500);
@@ -302,7 +330,7 @@ export function orderQuery(orderId: string) {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type)))",
+          "*, order_arrangements(*, order_ingredients(*, inventory_batches(variety_name, sku, color, unit_type, unit_cost, retail_price)))",
         )
         .eq("id", orderId)
         .single();
@@ -311,3 +339,16 @@ export function orderQuery(orderId: string) {
     },
   });
 }
+
+export const inventoryMovementsQuery = queryOptions({
+  queryKey: ["inventory_movements"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("inventory_movements")
+      .select("*, inventory_batches(variety_name, sku, color, unit_type, unit_cost, retail_price)")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    if (error) throw error;
+    return (data ?? []) as unknown as InventoryMovement[];
+  },
+});

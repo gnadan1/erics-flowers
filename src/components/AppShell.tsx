@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  BarChart3,
   ClipboardList,
   Flower2,
   LayoutDashboard,
@@ -20,6 +21,7 @@ const navItems: ReadonlyArray<{
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/receive", label: "Receive", icon: PackagePlus },
   { to: "/orders", label: "Order", icon: ClipboardList },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
