@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -49,21 +48,6 @@ export const Route = createFileRoute("/receive")({
 
 const NONE = "none";
 
-type BoolFieldProps = {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-};
-
-function BoolField({ label, checked, onCheckedChange }: BoolFieldProps) {
-  return (
-    <label className="flex h-10 items-center justify-between rounded-md border border-input px-3 text-sm">
-      <span>{label}</span>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-    </label>
-  );
-}
-
 function optionalNumber(value: string) {
   if (value.trim() === "") return null;
   const parsed = Number(value);
@@ -72,6 +56,20 @@ function optionalNumber(value: string) {
 
 function optionalText(value: string) {
   return value.trim() || null;
+}
+
+function categoryPriceMultiplier(categoryName?: string) {
+  const normalized = categoryName?.trim().toLowerCase();
+  if (normalized === "flowers" || normalized === "tropicals") return 3.5;
+  if (normalized === "greens" || normalized === "live plants") return 2;
+  return null;
+}
+
+function defaultSellingPrice(cost: string, categoryName?: string) {
+  const parsedCost = optionalNumber(cost);
+  const multiplier = categoryPriceMultiplier(categoryName);
+  if (parsedCost === null || multiplier === null) return "";
+  return (parsedCost * multiplier).toFixed(2);
 }
 
 function ReceivePage() {
@@ -89,60 +87,46 @@ function ReceivePage() {
   const [supplierId, setSupplierId] = useState<string>(NONE);
   const [locationId, setLocationId] = useState<string>(NONE);
   const [colorFamily, setColorFamily] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("");
-  const [secondaryColor, setSecondaryColor] = useState("");
   const [seasonality, setSeasonality] = useState("Year Round");
   const [availabilityStatus, setAvailabilityStatus] = useState("In Stock");
   const [qualityGrade, setQualityGrade] = useState("3");
-  const [floralRole, setFloralRole] = useState("");
   const [stemLength, setStemLength] = useState("");
-  const [stemLengthUnit, setStemLengthUnit] = useState("");
-  const [bloomSize, setBloomSize] = useState("");
-  const [stemsPerBunch, setStemsPerBunch] = useState("");
-  const [fragranceLevel, setFragranceLevel] = useState("");
-  const [texture, setTexture] = useState("");
-  const [expectedVaseLifeDays, setExpectedVaseLifeDays] = useState("");
-  const [requiresHydration, setRequiresHydration] = useState(true);
   const [storageTemperature, setStorageTemperature] = useState("");
   const [petToxicity, setPetToxicity] = useState("Unknown");
-  const [livePlant, setLivePlant] = useState(false);
-  const [plantPotSize, setPlantPotSize] = useState("");
-  const [plantLightRequirement, setPlantLightRequirement] = useState("");
-  const [plantWaterRequirement, setPlantWaterRequirement] = useState("");
   const [unitType, setUnitType] = useState("Stem");
-  const [quantityOnHand, setQuantityOnHand] = useState("");
+  const [quantityReceived, setQuantityReceived] = useState("");
   const [quantityReserved, setQuantityReserved] = useState("0");
-  const [reorderLevel, setReorderLevel] = useState("0");
   const [costPerUnit, setCostPerUnit] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
+  const [sellingPriceEdited, setSellingPriceEdited] = useState(false);
   const [receivedDate, setReceivedDate] = useState(new Date().toISOString().slice(0, 10));
   const [expirationDate, setExpirationDate] = useState("");
-  const [premiumItem, setPremiumItem] = useState(false);
-  const [organic, setOrganic] = useState(false);
-  const [locallyGrown, setLocallyGrown] = useState(false);
-  const [imported, setImported] = useState(false);
-  const [active, setActive] = useState(true);
   const [notes, setNotes] = useState("");
 
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => c.name.trim().toLowerCase() !== "novelty"),
+    [categories],
+  );
   const category = categories.find((c) => c.id === categoryId);
   const filteredSubcategories = useMemo(
     () => subcategories.filter((s) => s.category_id === categoryId),
     [categoryId, subcategories],
   );
   const subcategory = subcategories.find((s) => s.id === subcategoryId);
-
-  useEffect(() => {
-    if (subcategory && !expectedVaseLifeDays) {
-      setExpectedVaseLifeDays(String(subcategory.default_vase_life_days));
-    }
-  }, [subcategory, expectedVaseLifeDays]);
+  const vaseLifeDays = subcategory?.default_vase_life_days ?? 7;
+  const isLivePlant = category?.name === "Live Plants";
 
   useEffect(() => {
     if (category?.name === "Live Plants") {
-      setLivePlant(true);
       if (unitType === "Stem") setUnitType("Plant");
     }
   }, [category, unitType]);
+
+  useEffect(() => {
+    if (!sellingPriceEdited) {
+      setSellingPrice(defaultSellingPrice(costPerUnit, category?.name));
+    }
+  }, [category?.name, costPerUnit, sellingPriceEdited]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -153,19 +137,14 @@ function ReceivePage() {
       if (!unitType) throw new Error("Unit type is required");
 
       const grade = parseInt(qualityGrade, 10);
-      const qty = parseInt(quantityOnHand, 10);
+      const qty = parseInt(quantityReceived, 10);
       const reserved = parseInt(quantityReserved || "0", 10);
-      const reorder = parseInt(reorderLevel || "0", 10);
-      const vaseLife = parseInt(expectedVaseLifeDays, 10);
+      const vaseLife = vaseLifeDays;
       if (!Number.isFinite(grade) || grade < 1 || grade > 5)
         throw new Error("Quality grade must be 1-5");
-      if (!Number.isFinite(qty) || qty < 0) throw new Error("Quantity on hand must be at least 0");
+      if (!Number.isFinite(qty) || qty < 0) throw new Error("Quantity received must be at least 0");
       if (!Number.isFinite(reserved) || reserved < 0)
         throw new Error("Quantity reserved must be at least 0");
-      if (!Number.isFinite(reorder) || reorder < 0)
-        throw new Error("Reorder level must be at least 0");
-      if (!Number.isFinite(vaseLife) || vaseLife <= 0)
-        throw new Error("Expected vase life days must be positive");
 
       const itemPayload = {
         category_id: categoryId,
@@ -174,33 +153,33 @@ function ReceivePage() {
         variety_name: varietyName.trim(),
         supplier_id: supplierId === NONE ? null : supplierId,
         color_family: optionalText(colorFamily),
-        primary_color: optionalText(primaryColor),
-        secondary_color: optionalText(secondaryColor),
+        primary_color: null,
+        secondary_color: null,
         seasonality,
         availability_status: availabilityStatus,
         quality_grade: grade,
-        floral_role: optionalText(floralRole),
+        floral_role: null,
         stem_length: optionalNumber(stemLength),
-        stem_length_unit: optionalText(stemLengthUnit),
-        bloom_size: optionalText(bloomSize),
-        stems_per_bunch: optionalNumber(stemsPerBunch),
-        fragrance_level: optionalNumber(fragranceLevel),
-        texture: optionalText(texture),
+        stem_length_unit: optionalNumber(stemLength) === null ? null : "cm",
+        bloom_size: null,
+        stems_per_bunch: null,
+        fragrance_level: null,
+        texture: null,
         expected_vase_life_days: vaseLife,
-        requires_hydration: requiresHydration,
+        requires_hydration: true,
         storage_temperature: optionalText(storageTemperature),
         pet_toxicity: optionalText(petToxicity),
-        live_plant: livePlant,
-        plant_pot_size: optionalText(plantPotSize),
-        plant_light_requirement: optionalText(plantLightRequirement),
-        plant_water_requirement: optionalText(plantWaterRequirement),
+        live_plant: isLivePlant,
+        plant_pot_size: null,
+        plant_light_requirement: null,
+        plant_water_requirement: null,
         unit_type: unitType,
-        reorder_level: reorder,
-        premium_item: premiumItem,
-        organic,
-        locally_grown: locallyGrown,
-        imported,
-        active,
+        reorder_level: 0,
+        premium_item: false,
+        organic: false,
+        locally_grown: false,
+        imported: false,
+        active: true,
         notes: optionalText(notes),
       };
 
@@ -217,10 +196,10 @@ function ReceivePage() {
         inventory_item_id: item.id,
         sku: sku.trim(),
         variety_name: varietyName.trim(),
-        color: primaryColor.trim() || colorFamily || "",
+        color: colorFamily || "",
         color_family: optionalText(colorFamily),
-        primary_color: optionalText(primaryColor),
-        secondary_color: optionalText(secondaryColor),
+        primary_color: null,
+        secondary_color: null,
         supplier_id: supplierId === NONE ? null : supplierId,
         location_id: locationId === NONE ? null : locationId,
         qty_received: qty,
@@ -235,27 +214,27 @@ function ReceivePage() {
         seasonality,
         availability_status: availabilityStatus,
         quality_grade: grade,
-        floral_role: optionalText(floralRole),
+        floral_role: null,
         stem_length: optionalNumber(stemLength),
-        stem_length_unit: optionalText(stemLengthUnit),
-        bloom_size: optionalText(bloomSize),
-        stems_per_bunch: optionalNumber(stemsPerBunch),
-        fragrance_level: optionalNumber(fragranceLevel),
-        texture: optionalText(texture),
-        requires_hydration: requiresHydration,
+        stem_length_unit: optionalNumber(stemLength) === null ? null : "cm",
+        bloom_size: null,
+        stems_per_bunch: null,
+        fragrance_level: null,
+        texture: null,
+        requires_hydration: true,
         storage_temperature: optionalText(storageTemperature),
         pet_toxicity: optionalText(petToxicity),
-        live_plant: livePlant,
-        plant_pot_size: optionalText(plantPotSize),
-        plant_light_requirement: optionalText(plantLightRequirement),
-        plant_water_requirement: optionalText(plantWaterRequirement),
+        live_plant: isLivePlant,
+        plant_pot_size: null,
+        plant_light_requirement: null,
+        plant_water_requirement: null,
         unit_type: unitType,
-        reorder_level: reorder,
-        premium_item: premiumItem,
-        organic,
-        locally_grown: locallyGrown,
-        imported,
-        active,
+        reorder_level: 0,
+        premium_item: false,
+        organic: false,
+        locally_grown: false,
+        imported: false,
+        active: true,
         notes: optionalText(notes),
       });
       if (batchError) throw batchError;
@@ -304,7 +283,7 @@ function ReceivePage() {
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
+                    {visibleCategories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}
                       </SelectItem>
@@ -386,22 +365,6 @@ function ReceivePage() {
                 onValueChange={setColorFamily}
                 options={INVENTORY_DROPDOWN_OPTIONS.colorFamily}
               />
-              <div>
-                <Label htmlFor="primary_color">Primary color</Label>
-                <Input
-                  id="primary_color"
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="secondary_color">Secondary color</Label>
-                <Input
-                  id="secondary_color"
-                  value={secondaryColor}
-                  onChange={(e) => setSecondaryColor(e.target.value)}
-                />
-              </div>
               <SelectField
                 label="Seasonality"
                 value={seasonality}
@@ -426,14 +389,8 @@ function ReceivePage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <SelectField
-                label="Floral role"
-                value={floralRole}
-                onValueChange={setFloralRole}
-                options={INVENTORY_DROPDOWN_OPTIONS.floralRole}
-              />
               <div>
-                <Label htmlFor="stem_length">Stem length</Label>
+                <Label htmlFor="stem_length">Stem length (cm)</Label>
                 <Input
                   id="stem_length"
                   type="number"
@@ -441,56 +398,6 @@ function ReceivePage() {
                   step="0.01"
                   value={stemLength}
                   onChange={(e) => setStemLength(e.target.value)}
-                />
-              </div>
-              <SelectField
-                label="Stem length unit"
-                value={stemLengthUnit}
-                onValueChange={setStemLengthUnit}
-                options={INVENTORY_DROPDOWN_OPTIONS.stemLengthUnit}
-              />
-              <SelectField
-                label="Bloom size"
-                value={bloomSize}
-                onValueChange={setBloomSize}
-                options={INVENTORY_DROPDOWN_OPTIONS.bloomSize}
-              />
-              <div>
-                <Label htmlFor="stems_per_bunch">Stems per bunch</Label>
-                <Input
-                  id="stems_per_bunch"
-                  type="number"
-                  min={0}
-                  value={stemsPerBunch}
-                  onChange={(e) => setStemsPerBunch(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="fragrance">Fragrance level</Label>
-                <Input
-                  id="fragrance"
-                  type="number"
-                  min={0}
-                  max={5}
-                  value={fragranceLevel}
-                  onChange={(e) => setFragranceLevel(e.target.value)}
-                />
-              </div>
-              <SelectField
-                label="Texture"
-                value={texture}
-                onValueChange={setTexture}
-                options={INVENTORY_DROPDOWN_OPTIONS.texture}
-              />
-              <div>
-                <Label htmlFor="vase_life">Expected vase life days *</Label>
-                <Input
-                  id="vase_life"
-                  type="number"
-                  min={1}
-                  value={expectedVaseLifeDays}
-                  onChange={(e) => setExpectedVaseLifeDays(e.target.value)}
-                  required
                 />
               </div>
               <SelectField
@@ -515,13 +422,13 @@ function ReceivePage() {
                 options={INVENTORY_DROPDOWN_OPTIONS.unitType}
               />
               <div>
-                <Label htmlFor="qty">Quantity on hand *</Label>
+                <Label htmlFor="qty">Quantity received *</Label>
                 <Input
                   id="qty"
                   type="number"
                   min={0}
-                  value={quantityOnHand}
-                  onChange={(e) => setQuantityOnHand(e.target.value)}
+                  value={quantityReceived}
+                  onChange={(e) => setQuantityReceived(e.target.value)}
                   required
                 />
               </div>
@@ -533,16 +440,6 @@ function ReceivePage() {
                   min={0}
                   value={quantityReserved}
                   onChange={(e) => setQuantityReserved(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="reorder">Reorder level</Label>
-                <Input
-                  id="reorder"
-                  type="number"
-                  min={0}
-                  value={reorderLevel}
-                  onChange={(e) => setReorderLevel(e.target.value)}
                 />
               </div>
               <div>
@@ -564,7 +461,10 @@ function ReceivePage() {
                   min={0}
                   step="0.01"
                   value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
+                  onChange={(e) => {
+                    setSellingPriceEdited(true);
+                    setSellingPrice(e.target.value);
+                  }}
                 />
               </div>
               <div>
@@ -587,53 +487,6 @@ function ReceivePage() {
                 />
               </div>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <BoolField
-                label="Requires hydration"
-                checked={requiresHydration}
-                onCheckedChange={setRequiresHydration}
-              />
-              <BoolField label="Live plant" checked={livePlant} onCheckedChange={setLivePlant} />
-              <BoolField
-                label="Premium item"
-                checked={premiumItem}
-                onCheckedChange={setPremiumItem}
-              />
-              <BoolField label="Organic" checked={organic} onCheckedChange={setOrganic} />
-              <BoolField
-                label="Locally grown"
-                checked={locallyGrown}
-                onCheckedChange={setLocallyGrown}
-              />
-              <BoolField label="Imported" checked={imported} onCheckedChange={setImported} />
-              <BoolField label="Active" checked={active} onCheckedChange={setActive} />
-            </div>
-
-            {livePlant && (
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <Label htmlFor="pot_size">Plant pot size</Label>
-                  <Input
-                    id="pot_size"
-                    value={plantPotSize}
-                    onChange={(e) => setPlantPotSize(e.target.value)}
-                  />
-                </div>
-                <SelectField
-                  label="Plant light requirement"
-                  value={plantLightRequirement}
-                  onValueChange={setPlantLightRequirement}
-                  options={INVENTORY_DROPDOWN_OPTIONS.plantLightRequirement}
-                />
-                <SelectField
-                  label="Plant water requirement"
-                  value={plantWaterRequirement}
-                  onValueChange={setPlantWaterRequirement}
-                  options={INVENTORY_DROPDOWN_OPTIONS.plantWaterRequirement}
-                />
-              </div>
-            )}
 
             <div>
               <Label htmlFor="notes">Notes</Label>

@@ -40,7 +40,7 @@ import { computeFreshness, formatCurrency } from "@/lib/inventory";
 import { INVENTORY_DROPDOWN_OPTIONS } from "@/lib/inventoryConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, ShoppingCart } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Trash2, ShoppingCart } from "lucide-react";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({ meta: [{ title: "Inventory — Petal Inventory" }] }),
@@ -63,6 +63,102 @@ export const Route = createFileRoute("/inventory")({
   ),
 });
 
+type SortKey = "item" | "qty" | "location" | "supplier" | "sku" | "received" | "price" | "status";
+type SortDirection = "asc" | "desc";
+type SortState = { key: SortKey; direction: SortDirection };
+
+function normalizeText(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function inventoryItemLabel(batch: InventoryBatch) {
+  return (
+    batch.inventory_subcategories?.name ||
+    batch.inventory_categories?.name ||
+    batch.variety_name ||
+    batch.sku ||
+    "—"
+  );
+}
+
+function formatStemLength(batch: InventoryBatch) {
+  if (batch.stem_length === null) return null;
+  const value = Number(batch.stem_length);
+  if (!Number.isFinite(value)) return null;
+  return `${Number.isInteger(value) ? value : value.toFixed(1)} ${batch.stem_length_unit || "cm"}`;
+}
+
+function inventoryItemDetail(batch: InventoryBatch) {
+  const label = inventoryItemLabel(batch);
+  const detailParts = [
+    batch.variety_name && batch.variety_name !== label ? batch.variety_name : null,
+    batch.primary_color || batch.color_family,
+    formatStemLength(batch),
+  ].filter(Boolean);
+
+  return detailParts.join(" · ");
+}
+
+function freshnessSortValue(batch: InventoryBatch) {
+  if (batch.status !== "active" || batch.qty_remaining <= 0) return batch.status;
+  return computeFreshness(batch.received_date, batch.vase_life_days).status;
+}
+
+function compareStrings(a: string, b: string) {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+}
+
+function sortValue(batch: InventoryBatch, key: SortKey): string | number {
+  switch (key) {
+    case "item":
+      return normalizeText(`${inventoryItemLabel(batch)} ${inventoryItemDetail(batch)}`);
+    case "qty":
+      return batch.qty_remaining;
+    case "location":
+      return normalizeText(batch.locations?.name);
+    case "supplier":
+      return normalizeText(batch.suppliers?.name);
+    case "sku":
+      return normalizeText(batch.sku);
+    case "received":
+      return new Date(`${batch.received_date}T00:00:00`).getTime();
+    case "price":
+      return Number(batch.retail_price);
+    case "status":
+      return freshnessSortValue(batch);
+  }
+}
+
+function SortableTableHead({
+  label,
+  sortKey,
+  sort,
+  onSort,
+  className,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sort.key === sortKey;
+  const Icon = active ? (sort.direction === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        className="inline-flex h-8 items-center gap-1 rounded-sm text-left text-xs font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        onClick={() => onSort(sortKey)}
+      >
+        <span>{label}</span>
+        <Icon className="h-3.5 w-3.5" />
+      </button>
+    </TableHead>
+  );
+}
+
 function InventoryPage() {
   const { data: batches } = useSuspenseQuery(batchesQuery);
   const { data: categories } = useSuspenseQuery(inventoryCategoriesQuery);
@@ -76,6 +172,7 @@ function InventoryPage() {
   const [seasonalityFilter, setSeasonalityFilter] = useState<string>("all");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [qualityFilter, setQualityFilter] = useState<string>("all");
+  const [sort, setSort] = useState<SortState>({ key: "received", direction: "desc" });
   const [sellBatch, setSellBatch] = useState<InventoryBatch | null>(null);
   const [discardBatch, setDiscardBatch] = useState<InventoryBatch | null>(null);
   const filteredSubcategories = useMemo(
@@ -135,6 +232,26 @@ function InventoryPage() {
     availabilityFilter,
     qualityFilter,
   ]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const aValue = sortValue(a, sort.key);
+      const bValue = sortValue(b, sort.key);
+      const result =
+        typeof aValue === "number" && typeof bValue === "number"
+          ? aValue - bValue
+          : compareStrings(String(aValue), String(bValue));
+
+      return sort.direction === "asc" ? result : -result;
+    });
+  }, [filtered, sort]);
+
+  function updateSort(key: SortKey) {
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  }
 
   return (
     <AppShell>
@@ -298,48 +415,53 @@ function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>Qty</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Received</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
+              <SortableTableHead label="Item" sortKey="item" sort={sort} onSort={updateSort} />
+              <SortableTableHead label="Qty" sortKey="qty" sort={sort} onSort={updateSort} />
+              <SortableTableHead
+                label="Location"
+                sortKey="location"
+                sort={sort}
+                onSort={updateSort}
+              />
+              <SortableTableHead
+                label="Supplier"
+                sortKey="supplier"
+                sort={sort}
+                onSort={updateSort}
+              />
+              <SortableTableHead label="SKU" sortKey="sku" sort={sort} onSort={updateSort} />
+              <SortableTableHead
+                label="Received"
+                sortKey="received"
+                sort={sort}
+                onSort={updateSort}
+              />
+              <SortableTableHead label="Price" sortKey="price" sort={sort} onSort={updateSort} />
+              <SortableTableHead label="Status" sortKey="status" sort={sort} onSort={updateSort} />
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">
                   No batches match these filters.
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((b) => (
+              sorted.map((b) => (
                 <TableRow key={b.id}>
                   <TableCell>
-                    <div className="font-medium">{b.variety_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {b.sku}
-                      {b.primary_color || b.color_family
-                        ? ` · ${b.primary_color || b.color_family}`
-                        : ""}
-                    </div>
+                    <div className="font-medium">{inventoryItemLabel(b)}</div>
+                    <div className="text-xs text-muted-foreground">{inventoryItemDetail(b)}</div>
                   </TableCell>
                   <TableCell>
                     {b.qty_remaining}
                     <span className="text-muted-foreground"> / {b.qty_received}</span>
                   </TableCell>
-                  <TableCell className="text-sm">
-                    <div>{b.inventory_categories?.name ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {b.inventory_subcategories?.name ?? "—"}
-                    </div>
-                  </TableCell>
                   <TableCell className="text-sm">{b.locations?.name ?? "—"}</TableCell>
                   <TableCell className="text-sm">{b.suppliers?.name ?? "—"}</TableCell>
+                  <TableCell className="text-sm whitespace-nowrap">{b.sku ?? "—"}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">{b.received_date}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">
                     {formatCurrency(b.retail_price)}
